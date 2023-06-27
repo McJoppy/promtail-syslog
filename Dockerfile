@@ -4,6 +4,8 @@ FROM alpine:latest
 RUN apk update \
     && apk add \
         rsyslog \
+        rsyslog-mmutf8fix \
+        rsyslog-mmjsonparse \
         supervisor \
         unzip
 COPY rsyslog.conf /etc/rsyslog.conf
