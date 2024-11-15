@@ -55,4 +55,51 @@ scrape_configs:
     relabel_configs:
       - source_labels: ['__syslog_message_hostname']
         target_label: 'host'
+      - source_labels: ['__syslog_message_hostname']
+        target_label: 'hostname'
+      - source_labels: ['__syslog_message_severity']
+        target_label: 'severity'
+      - source_labels: ['__syslog_message_app_name']
+        target_label: 'appname'
+      - source_labels: ['__syslog_message_facility']
+        target_label: 'facility'
+
+```
+
+## Testing
+
+Build with docker eg `docker build -t 'testing' .` then start a container with the image specifing the outside ports as well as your Loki `CLIENT_URL`.
+
+With Linux test messages can be sent using `logger` eg `logger -p 0 -d -P 1514 -n 127.0.0.1 -t 'Ubuntu' 'UDP Test message'` will test via UDP port `1514` on `127.0.0.1` with the tag `Ubuntu`.
+
+The message should be visible in Loki:
+
+| Timestamp                 | Labels                | Message          |
+| ------------------------- | --------------------- | ---------------- |
+| `2024-11-15 19:55:26.941` | `appname=Ubuntu`      | UDP Test message |
+|                           | `facility=user`       |                  |
+|                           | `hostname=TESTING`    |                  |
+|                           | `appname=Ubuntu`      |                  |
+|                           | `service_name=syslog` |                  |
+|                           | `severity=emergency`  |                  |
+
+## Troubleshooting
+
+The container will have problems if `CLIENT_URL` isn't configured corretly.
+
+If you are seeing log messages as below, double check the environment variable for `CLIENT_URL` is set correctly.
+
+```log
+2023-12-28 05:22:30,586 INFO supervisord started with pid 1
+2023-12-28 05:22:31,588 INFO spawned: 'rsyslogd' with pid 7
+2023-12-28 05:22:31,592 INFO spawned: 'promtail' with pid 8
+2023-12-28 05:22:31,753 WARN exited: promtail (exit status 1; not expected)
+2023-12-28 05:22:32,755 INFO success: rsyslogd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2023-12-28 05:22:32,758 INFO spawned: 'promtail' with pid 26
+2023-12-28 05:22:32,810 WARN exited: promtail (exit status 1; not expected)
+2023-12-28 05:22:34,814 INFO spawned: 'promtail' with pid 39
+2023-12-28 05:22:34,875 WARN exited: promtail (exit status 1; not expected)
+2023-12-28 05:22:37,881 INFO spawned: 'promtail' with pid 51
+2023-12-28 05:22:37,934 WARN exited: promtail (exit status 1; not expected)
+2023-12-28 05:22:38,936 INFO gave up: promtail entered FATAL state, too many start retries too quickly
 ```
